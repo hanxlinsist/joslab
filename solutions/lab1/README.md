@@ -37,3 +37,5 @@ Why does QEMU start like this? This is how Intel designed the 8088 processor, wh
 通过 GDB 的 si (Step Instruction) 命令来单步调试 BIOS，你会发现 BIOS 做了一些基本的设置，比如：它会设置 interrupt descriptor table，初始化各种设备（如：VGA display）。After initializing the PCI bus and all the important devices the BIOS knows about, it searches for a bootable device such as a floppy, hard drive, or CD-ROM. Eventually, **when it finds a bootable disk, the BIOS reads the boot loader from the disk and transfers control to it**.
 
 ## The Boot Loader
+
+Floppy and hard disks for PCs are divided into 512 byte regions called **sectors**. A sector is the disk's **minimum transfer granularity**: each read or write operation must be one or more sectors in size and aligned on a sector boundary. If the disk is bootable, **the first sector is called the boot sector**, since this is where the boot loader code resides. When the BIOS finds a bootable floppy or hard disk, **it loads the 512-byte boot sector into memory at physical addresses 0x7c00 through 0x7dff**, and then uses a jmp instruction to set the CS:IP to 0000:7c00, passing control to the boot loader.
