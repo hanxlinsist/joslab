@@ -53,7 +53,7 @@ By tracking `boot.asm`, I can answer the following questions:
 
 > The answer for the question in the picture below:
 
-1.png
+![switch mode](assets/1.png)
 
 - What is the last instruction of the boot loader executed, and what is the first instruction of the kernel it just loaded?
 
