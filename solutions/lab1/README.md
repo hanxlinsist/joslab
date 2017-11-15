@@ -72,11 +72,11 @@ By tracking `boot.asm`, I can answer the following questions:
 
 To make sense out of `boot/main.c` you'll need to know what an ELF binary is. ELF is quite complex, but you only need to know in 6.828 is that it includes **a header with loading information**, followed by **several program sections**, each of which is a contiguous chunk of code or data intended to be **loaded into memory at a specified address**. The boot loader does not modify the code or data; it loads it into memory and starts executing it. The structure of the ELF is shown in the picture below:
 
-ELF_file.png
+![structure of an ELF file](assets/ELF_file.png)
 
 So, how can I get an ELF file from C source files? You need a series of tools, such as a preprocessor, compiler, assembler, and linker. The image below describes the whole process that a C program transforms an ELF file with some tools.
 
-ccompilerlinker001.png
+![Compile, link and execute stages for running program](assets/ccompilerlinker001.png)
 
 We are more interested several ones of program sections of an ELF file, they are:
 
@@ -88,7 +88,7 @@ We are more interested several ones of program sections of an ELF file, they are
 
 The linker actually enables separate compilation. As shown in figure below, an executable can be made up of a number of source files which can be compiled and assembled into their object files respectively, and then link all of these object files and some libraries by linker.
 
-//TODO ccompilerlinker003.png  The object files linking process
+![The object files linking process](assets/ccompilerlinker003.png)
 
 With all of the knowledge above, Let's proceed about Lab 1. Like all of the other C programs, our JOS kernel also can be compiled to an ELF file. We can examine it by typing:
 
@@ -96,4 +96,4 @@ With all of the knowledge above, Let's proceed about Lab 1. Like all of the othe
 
 Take particular note of the "VMA" (Virtual Memory Address) and the "LMA" (Load Memory Address) of the .text section. The load memory address of a section is the memory address at which that section should be loaded into memory. The virtual memory address of a section is the memory address from which the section expects to execute. As shown in the figure below, load memory address is real physical addresses at which sections should be loaded into memory, whereas virtual memory address is virtual addresses which are used when instructions are executed, such as an address in EIP register is a virtual address. The processor's memory management hardware will map virtual address to physical address.
 
-//TODO ccompilerlinker007.png  Physical and virtual address: Address translation
+![Physical and virtual address: Address translation](assets/ccompilerlinker007.png)
