@@ -97,3 +97,13 @@ With all of the knowledge above, Let's proceed about Lab 1. Like all of the othe
 Take particular note of the "VMA" (Virtual Memory Address) and the "LMA" (Load Memory Address) of the .text section. The load memory address of a section is the memory address at which that section should be loaded into memory. The virtual memory address of a section is the memory address from which the section expects to execute. As shown in the figure below, load memory address is real physical addresses at which sections should be loaded into memory, whereas virtual memory address is virtual addresses which are used when instructions are executed, such as an address in EIP register is a virtual address. The processor's memory management hardware will map virtual address to physical address.
 
 ![Physical and virtual address: Address translation](assets/ccompilerlinker007.png)
+
+The program header table tells the system how to create a process image. The boot loader uses it to decide how to load the sections. The program headers specify which parts of the ELF object to load into memory and the destination address each should occupy. You can inspect the program headers by typing:
+
+    objdump -x obj/kern/kernel
+
+The areas of the ELF object that need to be loaded into memory are those that are marked as "LOAD". So far, we have learned many things about ELF file, then let's play an example for understanding it better. As I mentioned above, The BIOS loads the boot sector into memory starting at address 0x7c00.By typing: 
+
+    objdump -h obj/boot/boot.out
+
+and not only you will see the load address of the .text section which is 0x7c00, but the virtual address is also this address. However, you can't expect that always be the case. For example, the kernel we will introduce later that its "VMA" and "LMA" is not the same.
