@@ -106,4 +106,20 @@ The areas of the ELF object that need to be loaded into memory are those that ar
 
     objdump -h obj/boot/boot.out
 
-and not only you will see the load address of the .text section which is 0x7c00, but the virtual address is also this address. However, you can't expect that always be the case. For example, the kernel we will introduce later that its "VMA" and "LMA" is not the same.
+and not only you will see the load address of the .text section which is 0x7c00, but the virtual address is also this address. However, you can't expect that always be the case. For example, the kernel we will introduce later and its "VMA" and "LMA" is not the same.
+
+You may wonder why the load address is 0x7c00 but not the other else? This is because that we set the link address by passing -Ttext 0x7C00 to the linker in `boot/Makefrag`, so the linker will produce the correct memory addresses in the generated code.
+
+How do I know the address at which the program should begin executing? In other words, how do I know the entry point in my program? This is gonna be easy, just typing:
+
+    objdump -f obj/kern/kernel
+
+The address following "start address" is exactly what you want. Obviously, it is 0x0010000c, likes I mentioned above. You should now be able to understand the minimal ELF loader in `boot/main.c`. It reads each section of the kernel from disk into memory at the section's load address and then jumps to the kernel's entry point.
+
+So far, you have arrived at a decent grasp of ELF file and boot loader. Now, you can easily answer the question of exercise 6. The question as follows:
+
+> Reset the machine (exit QEMU/GDB and start them again). Examine the 8 words of memory at 0x00100000 at the point the BIOS enters the boot loader, and then again at the point the boot loader enters the kernel. Why are they different? What is there at the second breakpoint?
+
+> **Answer:** If you want to answer the questions, you need to know what the address 0x00100000 represents for? As I mentioned above, it represents the load memory address of the kernel. And you also know that the kernel is loaded by boot loader. At the point the BIOS enters the boot loader, the boot loader just begin executing. Therefore, the kernel has not yet loaded by the boot loader at this point. So the memory at 0x00100000 is empty(0x0000, 0x0000, ...). At the point the boot loader enters the kernel, the boot loader has loaded the kernel, so the memory must be not empty. I dumped a word of memory at 0x00100000 by typing: `x/x 0x100000`, it is `0x1badb002`.
+
+# The Kernel
