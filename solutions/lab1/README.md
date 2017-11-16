@@ -118,8 +118,28 @@ The address following "start address" is exactly what you want. Obviously, it is
 
 So far, you have arrived at a decent grasp of ELF file and boot loader. Now, you can easily answer the question of exercise 6. The question as follows:
 
-> Reset the machine (exit QEMU/GDB and start them again). Examine the 8 words of memory at 0x00100000 at the point the BIOS enters the boot loader, and then again at the point the boot loader enters the kernel. Why are they different? What is there at the second breakpoint?
+> **Question:** Reset the machine (exit QEMU/GDB and start them again). Examine the 8 words of memory at 0x00100000 at the point the BIOS enters the boot loader, and then again at the point the boot loader enters the kernel. Why are they different? What is there at the second breakpoint?
 
 > **Answer:** If you want to answer the questions, you need to know what the address 0x00100000 represents for? As I mentioned above, it represents the load memory address of the kernel. And you also know that the kernel is loaded by boot loader. At the point the BIOS enters the boot loader, the boot loader just begin executing. Therefore, the kernel has not yet loaded by the boot loader at this point. So the memory at 0x00100000 is empty(0x0000, 0x0000, ...). At the point the boot loader enters the kernel, the boot loader has loaded the kernel, so the memory must be not empty. I dumped a word of memory at 0x00100000 by typing: `x/x 0x100000`, it is `0x1badb002`.
 
 # The Kernel
+
+Like the boot loader, the kernel begins with some assembly language code that sets things up so that C language code can execute properly. You can find the load address of the kernel at the top of `kern/kernel.ld`
+
+I already told the difference between LMA and VMA in the above. You may wonder how the memory reference turn load memory address into virtual memory address? The instructions in kernel did it. Up until `kern/entry.S` sets the CR0_PG flag, memory references are treated as physical addresses, once `CR0_PG` is set, memory references are virtual addresses that get translated by the virtual memory hardware to physical addresses.
+
+Now, let's answer the questions of exercise 7. The questions are as follows:
+
+> **Question:** Use QEMU and GDB to trace into the JOS kernel and stop at the `movl %eax, %cr0`. Examine memory at 0x00100000 and at 0xf0100000. Now, single step over that instruction using the stepi GDB command. Again, examine memory at 0x00100000 and at 0xf0100000. Make sure you understand what just happened.
+
+> **Answer:** As shown in the figure below, before the new mapping is established, the memory at 0xf0100000 is empty; After paging is enabled, there is a mapping between virtual and physical address, so the word of each address will be the same.
+
+![enable paging](assets/enable_paging.png)
+
+> **Question:** What is the first instruction after the new mapping is established that would fail to work properly if the mapping weren't in place?
+
+> **Answer:** If I comment out the `movl %eax, %cr0` in `kern/entry.S`, that will lead to control register not setting proper and causing mapping weren't in place. As shown in the figure below, the instruction `jmp *%eax` will cause the error, because the value in the EAX register is `0xf010002c` at which the instruction execute will beyond the range of the RAM's address space.
+
+![execute code outside RAM](assets/outside_RAM.png)
+
+>**qemu: fatal:** Trying to execute code outside RAM or ROM at 0x00000000f010002c
