@@ -24,6 +24,7 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{ "backtrace", "Display information about the kernel", backtrace }
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
@@ -58,10 +59,48 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
-	// Your code here.
+	uint32_t* ebp = (uint32_t*) read_ebp();
+	cprintf("Stack backtrace:\n");
+
+	while (ebp) {
+		cprintf("ebp %x  eip %x  args", ebp, *(ebp+1));
+		int i = 1;
+		while (i++ < 6)
+			cprintf(" %x", *(ebp + i));
+		cprintf("\n");
+		// restore base pointer of previous stack frame
+		ebp = (uint32_t*) *ebp;
+	}
 	return 0;
 }
 
+int
+backtrace(int argc, char **argv, struct Trapframe *tf)
+{
+	uint32_t* ebp = (uint32_t*) read_ebp();
+	cprintf("Stack backtrace:\n");
+
+	while (ebp) {
+		uint32_t eip = *(ebp+1);
+		cprintf("ebp %x  eip %x  args", ebp, eip);
+		int i = 1;
+		while (i++ < 6)
+			cprintf(" %08x", *(ebp + i));
+		cprintf("\n");
+
+		// Eipdebuginfo is defined in kern/kdebug.h
+		struct Eipdebuginfo info;
+		debuginfo_eip(eip, &info);
+		// If you don't know what %.*s means, 
+		// please refer to https://stackoverflow.com/questions/20683552/how-to-make-a-not-null-terminated-c-string
+		cprintf("\t%s:%d: %.*s+%d\n", info.eip_file, info.eip_line, 
+			info.eip_fn_namelen, info.eip_fn_name, 
+			eip - info.eip_fn_addr);
+		// restore base pointer of previous stack frame
+		ebp = (uint32_t*) *ebp;
+	}
+	return 0;
+}
 
 
 /***** Kernel monitor command interpreter *****/

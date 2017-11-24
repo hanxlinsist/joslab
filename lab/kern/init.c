@@ -15,7 +15,8 @@ test_backtrace(int x)
 	if (x > 0)
 		test_backtrace(x-1);
 	else
-		mon_backtrace(0, 0, 0);
+		// replace mon_backtrace(0, 0, 0) to backtrace(0,0,0)
+		backtrace(0, 0, 0);
 	cprintf("leaving test_backtrace %d\n", x);
 }
 
