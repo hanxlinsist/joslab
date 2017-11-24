@@ -143,3 +143,58 @@ Now, let's answer the questions of exercise 7. The questions are as follows:
 ![execute code outside RAM](assets/outside_RAM.png)
 
 >**qemu: fatal:** Trying to execute code outside RAM or ROM at 0x00000000f010002c
+
+# Formatted Printing to the Console
+
+The relationship between `kern/printf.c`, `lib/printfmt.c`, and `kern/console.c` as following:
+
+> The function `cprintf()` in `printf.c` is similar to the function `printf()` in C programming language. Both of the functions have the same arguments which represent the same meaning. Then, the function `cprintf()` call the function `vcprintf()`, then the `vcprintf()` call the function `vprintfmt()` in `printfmt.c`. The function `vprintfmt` does a lot of work for formatting string. It also need to the function `putch()` which is passed as function pointer, so it can print string to console. The main functionality of the `console.c` is handling the hardware part and printing the formatted string.
+
+Completing the exercise 8 is not a big deal if you understand the relationship of those functions. You can check the file `printfmt.c` to see how I changed it.
+
+I'm not preparing to answer the following questions, instead, I'm going to let you understand GCC's calling convention on the x86. [The notes for Lecture 2](https://pdos.csail.mit.edu/6.828/2017/lec/l-x86.html)  have done a great job for that. However, I'm going to supply some additional materials to help you understand calling convention better.
+
+[Explain the concept of a stack frame in a nutshell](https://stackoverflow.com/questions/10057443/explain-the-concept-of-a-stack-frame-in-a-nutshell)
+
+[What is between ESP and EBP?](https://stackoverflow.com/questions/15020621/what-is-between-esp-and-ebp)
+
+[What is stack frame in assembly?](https://stackoverflow.com/questions/3699283/what-is-stack-frame-in-assembly/3699916)
+
+Basically, `ESP` register is the current stack pointer. `EBP` is the base pointer for the current stack frame. The calling stack of example in the notes is shown in the picture below:
+
+![calling stack of example](assets/calling_stack.png)
+
+# The Stack
+
+> **Exercise 9:** Determine where the kernel initializes its stack, and exactly where in memory its stack is located.
+
+> **Answer:** You will find the following code in the `kernel.asm`
+
+```
+	# Set the stack pointer
+	movl	$(bootstacktop),%esp
+f0100034:	bc 00 00 11 f0   mov  $0xf0110000,%esp
+```
+
+> **Exercise 10:** To become familiar with the C calling conventions on the x86, find the address of the test_backtrace function in obj/kern/kernel.asm, set a breakpoint there, and examine what happens each time it gets called after the kernel starts. How many 32-bit words does each recursive nesting level of test_backtrace push on the stack, and what are those words
+
+> **Answer:** The entry of the `test_backtrace` is shownin the picture below. By finding the difference of EBPs of two contiguous stack frame which is constructed in two adjacent recursive calls. In my case, as shown in the picture below, **difference of EBPs = 0xf010fff8 − 0xf010ffd8=0x20** i.e. 32 in decimal. So, every time it pushes 8 **4-byte** words as follows:
+
+- return address
+- saved ebp
+- saved ebx
+- abandoned
+- abandoned
+- abandoned
+- abandoned
+- variable x of next recursive call.
+
+![test backtrace](assets/test_backtrace.png)
+
+![difference of EBP](assets/differencebetweenebp.png)
+
+> **Exercise 11 & 12:** Implement the backtrace function.
+
+> **Answer:** You can check the file `monitor.c` to see how I implemented it.
+
+# This completes the lab.
