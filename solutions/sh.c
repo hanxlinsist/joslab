@@ -61,22 +61,52 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       _exit(0);
-    fprintf(stderr, "exec not implemented\n");
-    // Your code here ...
+    // You can use execvp() to searche PATH environment variable.
+    // execv(ecmd->argv[0], ecmd->argv); // For execv(), you should give an absolute pathname, such as '/bin/ls', for executing command.
+    execvp(ecmd->argv[0], ecmd->argv);
+    fprintf(stderr, "execv %s failed\n", ecmd->argv[0]);
     break;
 
   case '>':
   case '<':
     rcmd = (struct redircmd*)cmd;
-    fprintf(stderr, "redir not implemented\n");
-    // Your code here ...
+    // fprintf(stderr, "redir not implemented\n");
+    close(rcmd->fd);
+    if (open(rcmd->file, rcmd->flags, S_IRUSR | S_IWUSR) < 0){
+      fprintf(stderr, "open %s failed\n", rcmd->file);
+      exit(0);
+    }
     runcmd(rcmd->cmd);
     break;
 
   case '|':
     pcmd = (struct pipecmd*)cmd;
-    fprintf(stderr, "pipe not implemented\n");
-    // Your code here ...
+    if (pipe(p) < 0) {
+      fprintf(stderr, "pipe failed\n");
+      exit(0);
+    }
+
+    // Note: Changing a variable in child process does not affect the variable in parent, or vice versa.
+    if (fork1() == 0) {
+      close(1);
+      dup(p[1]);
+      close(p[0]);
+      close(p[1]);
+      runcmd(pcmd->left);
+    }
+
+    if (fork1() == 0) {
+      close(0);
+      dup(p[0]);
+      close(p[0]);
+      close(p[1]);
+      runcmd(pcmd->right);
+    }
+
+    close(p[0]);
+    close(p[1]);
+    wait(&r);
+    wait(&r);
     break;
   }    
   _exit(0);
@@ -101,6 +131,9 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+    if (*buf == '#')
+      break;
+
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Clumsy but will have to do for now.
       // Chdir has no effect on the parent if run in the child.
@@ -109,6 +142,7 @@ main(void)
         fprintf(stderr, "cannot cd %s\n", buf+3);
       continue;
     }
+
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(&r);
@@ -123,6 +157,7 @@ fork1(void)
   
   pid = fork();
   if(pid == -1)
+    // perror() is a C library function which aims to print a descriptive error message to stderr
     perror("fork");
   return pid;
 }
